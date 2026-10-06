@@ -40,6 +40,10 @@ import {
   loadCircuitFromFile,
 } from "./storage/circuitFile"
 
+import {
+  useCircuitSelection,
+} from "./hooks/useCircuitSelection"
+
 const EDITOR_WIDTH = 900
 const EDITOR_HEIGHT = 650
 
@@ -75,7 +79,6 @@ function normalizeNumberInput(
       ""
     )
 }
-
 
 // =====================================================
 // 部品生成
@@ -180,37 +183,21 @@ function App() {
   // 選択状態
   // ---------------------------------------------------
 
-  const [
-    selectedComponentId,
-    setSelectedComponentId,
-  ] = useState<
-    string | null
-  >(null)
+  const {
+  selectedComponentId,
+  setSelectedComponentId,
 
+  selectedTerminalId,
+  setSelectedTerminalId,
 
-  const [
-    selectedTerminalId,
-    setSelectedTerminalId,
-  ] = useState<
-    string | null
-  >(null)
+  selectedWireId,
+  setSelectedWireId,
 
+  selectedBendId,
+  setSelectedBendId,
 
-  const [
-    selectedWireId,
-    setSelectedWireId,
-  ] = useState<
-    string | null
-  >(null)
-
-
-  const [
-    selectedBendId,
-    setSelectedBendId,
-  ] = useState<
-    string | null
-  >(null)
-
+  clearCircuitSelection, 
+} = useCircuitSelection()
 
   // ---------------------------------------------------
   // 部品値入力
@@ -355,6 +342,10 @@ function App() {
     )
   }
 
+  function clearSelection() {
+  clearCircuitSelection()
+  setValueInput("")
+}
 
   // ===================================================
   // 部品ドラッグ開始
@@ -1795,35 +1786,6 @@ function handleBendClick(
     e.target.value =
       ""
   }
-
-
-  // ===================================================
-  // 選択解除
-  // ===================================================
-
-  function clearSelection() {
-
-    setSelectedComponentId(
-      null
-    )
-
-    setSelectedTerminalId(
-      null
-    )
-
-    setSelectedWireId(
-      null
-    )
-
-    setSelectedBendId(
-      null
-    )
-
-    setValueInput(
-      ""
-    )
-  }
-
 
   // ===================================================
   // 選択中の部品
