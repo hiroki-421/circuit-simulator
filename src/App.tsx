@@ -44,10 +44,12 @@ import {
   useCircuitSelection,
 } from "./hooks/useCircuitSelection"
 
+import {
+  useComponentDrag,
+} from "./hooks/useComponentDrag"
+
 const EDITOR_WIDTH = 900
 const EDITOR_HEIGHT = 650
-
-const GRID_SIZE = 20
 
 // =====================================================
 // 数値入力の正規化
@@ -208,6 +210,19 @@ function App() {
     setValueInput,
   ] = useState("")
 
+// 部品ドラッグ
+  const {
+    handleComponentPointerDown,
+  } = useComponentDrag({
+    circuit,
+    setCircuit,
+
+    setSelectedComponentId,
+    setSelectedWireId,
+    setSelectedBendId,
+
+    setValueInput,
+  })
 
   // ---------------------------------------------------
   // 計算結果
@@ -269,14 +284,6 @@ function App() {
   // 部品ドラッグ
   // ---------------------------------------------------
 
-  const draggingRef =
-    useRef<{
-      componentId: string
-      startX: number
-      startY: number
-      originalX: number
-      originalY: number
-    } | null>(null)
 
 
   // ---------------------------------------------------
@@ -347,163 +354,7 @@ function App() {
   setValueInput("")
 }
 
-  // ===================================================
-  // 部品ドラッグ開始
-  // ===================================================
-
-  function handleComponentPointerDown(
-    e: ReactPointerEvent<SVGGElement>,
-    componentId: string
-  ) {
-
-    e.stopPropagation()
-
-
-    const component =
-      circuit.components.find(
-        (c) =>
-          c.id ===
-          componentId
-      )
-
-
-    if (!component) {
-      return
-    }
-
-
-    setSelectedComponentId(
-      componentId
-    )
-
-    setSelectedWireId(
-      null
-    )
-
-    setSelectedBendId(
-      null
-    )
-
-
-    setValueInput(
-      component.valueInput
-    )
-
-
-    draggingRef.current = {
-      componentId,
-
-      startX:
-        e.clientX,
-
-      startY:
-        e.clientY,
-
-      originalX:
-        component.x,
-
-      originalY:
-        component.y,
-    }
-
-
-    window.addEventListener(
-      "pointermove",
-      handleComponentPointerMove
-    )
-
-    window.addEventListener(
-      "pointerup",
-      handleComponentPointerUp
-    )
-  }
-
-
-  // ===================================================
-  // 部品ドラッグ中
-  // ===================================================
-  function handleComponentPointerMove(
-    e: globalThis.PointerEvent
-  ) {
-
-    const drag =
-      draggingRef.current
-
-    if (!drag) {
-      return
-    }
-
-    const dx =
-      e.clientX -
-      drag.startX
-
-    const dy =
-      e.clientY -
-      drag.startY
-
-    const rawX =
-      drag.originalX +
-      dx
-
-    const rawY =
-      drag.originalY +
-      dy
-
-    const snappedX =
-      Math.round(
-        rawX / GRID_SIZE
-      ) *
-      GRID_SIZE
-
-    const snappedY =
-      Math.round(
-        rawY / GRID_SIZE
-      ) *
-      GRID_SIZE
-
-    setCircuit(
-      (prev) => ({
-        ...prev,
-
-        components:
-          prev.components.map(
-            (component) =>
-              component.id ===
-              drag.componentId
-                ? {
-                    ...component,
-
-                    x: snappedX,
-
-                    y: snappedY,
-                  }
-                : component
-          ),
-      })
-    )
-  }
   
-  // ===================================================
-  // 部品ドラッグ終了
-  // ===================================================
-
-  function handleComponentPointerUp() {
-
-    draggingRef.current =
-      null
-
-
-    window.removeEventListener(
-      "pointermove",
-      handleComponentPointerMove
-    )
-
-    window.removeEventListener(
-      "pointerup",
-      handleComponentPointerUp
-    )
-  }
-
 
   // ===================================================
   // 端子クリック
