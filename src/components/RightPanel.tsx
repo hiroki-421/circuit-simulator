@@ -147,27 +147,36 @@ export default function RightPanel({
         </section>
       )}
 
-      {selectedWire && (
-        <section>
-          <h3>🔌 配線設定</h3>
+{selectedWire && (
+  <section>
+    <h3>🔌 配線設定</h3>
 
-          <button
-            style={buttonStyle}
-            onClick={onDeleteWire}
-          >
-            🗑️ この配線を削除
-          </button>
+    <button
+      style={buttonStyle}
+      onClick={onDeleteWire}
+    >
+      🗑️ この配線を削除
+    </button>
+  </section>
+)}
 
-          {selectedBendId && (
-            <button
-              style={buttonStyle}
-              onClick={onDeleteBend}
-            >
-              ➖ 選択した折れ点を削除
-            </button>
-          )}
-        </section>
-      )}
+{selectedBendId && (
+  <section>
+    <h3>📍 折れ点設定</h3>
+
+    <p>
+      選択中の折れ点：
+      <strong>{selectedBendId}</strong>
+    </p>
+
+    <button
+      style={buttonStyle}
+      onClick={onDeleteBend}
+    >
+      ➖ 選択した折れ点を削除
+    </button>
+  </section>
+)}
 
       <hr />
 

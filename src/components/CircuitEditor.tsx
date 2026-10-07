@@ -356,12 +356,14 @@ export default function CircuitEditor({
                           bend.id
                         )
                       }
-                      onClick={(e) =>
+                      onClick={(e) =>{
+                        e.stopPropagation()
+
                         onBendClick(
                           e,
                           bend.id
                         )
-                      }
+                      }}
                     />
                   )
                 )}
