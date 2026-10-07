@@ -10,14 +10,12 @@ import type {
 } from "react"
 
 import type {
-  CircuitComponent,
-  ComponentType,
-  ResistorResult,
-} from "./types/circuit"
-
-import type {
   SpiceResult,
 } from "./logic/spice/types"
+
+import type {
+  ResistorResult,
+} from "./types/circuit"
 
 
 import LeftPanel from "./components/LeftPanel"
@@ -54,117 +52,12 @@ import {
   useCircuit,
 } from "./hooks/useCircuit"
 
+import {
+  useComponentActions,
+} from "./hooks/useComponentActions"
+
 const EDITOR_WIDTH = 900
 const EDITOR_HEIGHT = 650
-
-// =====================================================
-// 数値入力の正規化
-// 半角・全角数字に対応
-// =====================================================
-
-function normalizeNumberInput(
-  value: string
-) {
-  return value
-    .replace(
-      /[０-９]/g,
-      (char) =>
-        String.fromCharCode(
-          char.charCodeAt(0) -
-            0xfee0
-        )
-    )
-    .replace(
-      /．/g,
-      "."
-    )
-    .replace(
-      /－/g,
-      "-"
-    )
-    .replace(
-      /[^0-9.-]/g,
-      ""
-    )
-}
-
-// =====================================================
-// 部品生成
-// =====================================================
-
-function createComponent(
-  type: ComponentType,
-  id: string
-): CircuitComponent {
-
-  const defaults: Record<
-    ComponentType,
-    number
-  > = {
-    battery: 5,
-    resistor: 1000,
-    capacitor: 0.00001,
-    inductor: 0.001,
-    switch: 0,
-    ground: 0,
-  }
-
-  const isGround =
-    type === "ground"
-
-  const isSwitch =
-    type === "switch"
-
-
-  return {
-    id,
-
-    type,
-
-    x: 300,
-
-    y: 200,
-
-    value:
-      defaults[type],
-
-    valueInput:
-      isGround || isSwitch
-        ? ""
-        : String(
-            defaults[type]
-          ),
-
-    terminals:
-      isGround
-        ? [
-            {
-              id:
-                `${id}-terminal`,
-              side: "left",
-            },
-          ]
-        : [
-            {
-              id:
-                `${id}-left`,
-              side: "left",
-            },
-            {
-              id:
-                `${id}-right`,
-              side: "right",
-            },
-          ],
-
-    ...(isSwitch
-      ? {
-          switchOn: false,
-        }
-      : {}),
-  }
-}
-
 
 // =====================================================
 // App
@@ -264,6 +157,34 @@ function App() {
     SpiceResult | null
   >(null)
 
+    // ---------------------------------------------------
+  // 部品操作
+  // ---------------------------------------------------
+
+  const {
+    addComponent,
+    toggleSwitch,
+    handleValueChange,
+    deleteSelectedComponent,
+  } = useComponentActions({
+    circuit,
+    setCircuit,
+    createId,
+
+    selectedComponentId,
+
+    setSelectedComponentId,
+    setSelectedTerminalId,
+    setSelectedWireId,
+    setSelectedBendId,
+
+    setValueInput,
+
+    setClosedCircuit,
+    setTotalResistance,
+    setTotalCurrent,
+    setResistorResults,
+  })
   // ---------------------------------------------------
   // ファイル
   // ---------------------------------------------------
@@ -314,50 +235,6 @@ function App() {
   // ===================================================
   // 部品追加
   // ===================================================
-
-  const addComponent = (
-    type: ComponentType
-  ) => {
-
-    const id =
-      createId(type)
-
-
-    const newComponent =
-      createComponent(
-        type,
-        id
-      )
-
-
-    setCircuit(
-      (prev) => ({
-        ...prev,
-
-        components: [
-          ...prev.components,
-          newComponent,
-        ],
-      })
-    )
-
-
-    setClosedCircuit(
-      null
-    )
-
-    setTotalResistance(
-      0
-    )
-
-    setTotalCurrent(
-      0
-    )
-
-    setResistorResults(
-      []
-    )
-  }
 
   function clearSelection() {
   clearCircuitSelection()
@@ -634,229 +511,13 @@ function App() {
   // スイッチ切替
   // ===================================================
 
-  function toggleSwitch(
-    componentId: string
-  ) {
-
-    setCircuit(
-      (prev) => ({
-        ...prev,
-
-        components:
-          prev.components.map(
-            (component) =>
-              component.id ===
-              componentId
-                ? {
-                    ...component,
-
-                    switchOn:
-                      !(
-                        component.switchOn ??
-                        false
-                      ),
-                  }
-                : component
-          ),
-      })
-    )
-
-
-    setClosedCircuit(
-      null
-    )
-
-    setTotalResistance(
-      0
-    )
-
-    setTotalCurrent(
-      0
-    )
-
-    setResistorResults(
-      []
-    )
-  }
-
-
   // ===================================================
   // 部品値変更
   // ===================================================
 
-  function handleValueChange(
-    rawValue: string
-  ) {
-
-    const normalized =
-      normalizeNumberInput(
-        rawValue
-      )
-
-
-    setValueInput(
-      normalized
-    )
-
-
-    if (
-      selectedComponentId ===
-      null
-    ) {
-      return
-    }
-
-
-    const value =
-      Number(normalized)
-
-
-    if (
-      normalized === "" ||
-      Number.isNaN(value)
-    ) {
-      return
-    }
-
-
-    setCircuit(
-      (prev) => ({
-        ...prev,
-
-        components:
-          prev.components.map(
-            (component) =>
-              component.id ===
-              selectedComponentId
-                ? {
-                    ...component,
-
-                    value,
-
-                    valueInput:
-                      normalized,
-                  }
-                : component
-          ),
-      })
-    )
-
-
-    setClosedCircuit(
-      null
-    )
-
-    setTotalResistance(
-      0
-    )
-
-    setTotalCurrent(
-      0
-    )
-
-    setResistorResults(
-      []
-    )
-  }
-
-
   // ===================================================
   // 部品削除
   // ===================================================
-
-  function deleteSelectedComponent() {
-
-    if (
-      selectedComponentId ===
-      null
-    ) {
-      return
-    }
-
-
-    const component =
-      circuit.components.find(
-        (c) =>
-          c.id ===
-          selectedComponentId
-      )
-
-
-    if (!component) {
-      return
-    }
-
-
-    const terminalIds =
-      new Set(
-        component.terminals.map(
-          (terminal) =>
-            terminal.id
-        )
-      )
-
-
-    setCircuit(
-      (prev) => ({
-        ...prev,
-
-        components:
-          prev.components.filter(
-            (c) =>
-              c.id !==
-              selectedComponentId
-          ),
-
-        wires:
-          prev.wires.filter(
-            (wire) =>
-              !terminalIds.has(
-                wire.from
-              ) &&
-              !terminalIds.has(
-                wire.to
-              )
-          ),
-      })
-    )
-
-
-    setSelectedComponentId(
-      null
-    )
-
-    setSelectedTerminalId(
-      null
-    )
-
-    setSelectedWireId(
-      null
-    )
-
-    setSelectedBendId(
-      null
-    )
-
-    setValueInput(
-      ""
-    )
-
-    setClosedCircuit(
-      null
-    )
-
-    setTotalResistance(
-      0
-    )
-
-    setTotalCurrent(
-      0
-    )
-
-    setResistorResults(
-      []
-    )
-  }
 
   // ===================================================
   // 閉回路チェック
