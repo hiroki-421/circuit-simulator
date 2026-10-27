@@ -1,0 +1,137 @@
+
+import type { Dispatch, SetStateAction, MouseEvent } from "react"
+import type { Circuit } from "../types/circuit"
+
+type UseTerminalConnectionProps = {
+  circuit: Circuit
+  setCircuit: Dispatch<SetStateAction<Circuit>>
+  idCounter: { current: number }
+
+  selectedTerminalId: string | null
+  setSelectedTerminalId: (id: string | null) => void
+  setSelectedWireId: (id: string | null) => void
+  setSelectedBendId: (id: string | null) => void
+
+  setClosedCircuit: (value: boolean | null) => void
+  setTotalResistance: (value: number) => void
+  setTotalCurrent: (value: number) => void
+  setResistorResults: Dispatch<
+    SetStateAction<Circuit["components"] extends never[] ? never[] : import("../types/circuit").ResistorResult[]>
+  >
+}
+
+export function useTerminalConnection({
+  circuit,
+  setCircuit,
+  idCounter,
+  selectedTerminalId,
+  setSelectedTerminalId,
+  setSelectedWireId,
+  setSelectedBendId,
+  setClosedCircuit,
+  setTotalResistance,
+  setTotalCurrent,
+  setResistorResults,
+}: UseTerminalConnectionProps) {
+  function resetCalculation() {
+    setClosedCircuit(null)
+    setTotalResistance(0)
+    setTotalCurrent(0)
+    setResistorResults([])
+  }
+
+  function handleTerminalClick(
+    e: MouseEvent<SVGCircleElement>,
+    terminalId: string
+  ) {
+    e.stopPropagation()
+
+    if (selectedTerminalId === null) {
+      setSelectedTerminalId(terminalId)
+      return
+    }
+
+    if (selectedTerminalId === terminalId) {
+      setSelectedTerminalId(null)
+      return
+    }
+
+    const alreadyConnected = circuit.wires.some(
+      (wire) =>
+        (wire.from === selectedTerminalId && wire.to === terminalId) ||
+        (wire.from === terminalId && wire.to === selectedTerminalId)
+    )
+
+    if (alreadyConnected) {
+      setSelectedTerminalId(null)
+      return
+    }
+
+    const fromComponent = circuit.components.find((component) =>
+      component.terminals.some(
+        (terminal) => terminal.id === selectedTerminalId
+      )
+    )
+
+    const toComponent = circuit.components.find((component) =>
+      component.terminals.some((terminal) => terminal.id === terminalId)
+    )
+
+    if (!fromComponent || !toComponent) {
+      setSelectedTerminalId(null)
+      return
+    }
+
+    const fromTerminal = fromComponent.terminals.find(
+      (terminal) => terminal.id === selectedTerminalId
+    )
+    const toTerminal = toComponent.terminals.find(
+      (terminal) => terminal.id === terminalId
+    )
+
+    if (!fromTerminal || !toTerminal) {
+      setSelectedTerminalId(null)
+      return
+    }
+
+    const fromX =
+      fromTerminal.side === "left"
+        ? fromComponent.x - 30
+        : fromComponent.x + 30
+
+    const toX =
+      toTerminal.side === "left"
+        ? toComponent.x - 30
+        : toComponent.x + 30
+
+    const wireId = `wire-${idCounter.current++}`
+    const bendId = `bend-${idCounter.current++}`
+
+    setCircuit((prev) => ({
+      ...prev,
+      wires: [
+        ...prev.wires,
+        {
+          id: wireId,
+          from: selectedTerminalId,
+          to: terminalId,
+          bends: [
+            {
+              id: bendId,
+              x: (fromX + toX) / 2,
+              y: (fromComponent.y + toComponent.y) / 2,
+            },
+          ],
+        },
+      ],
+    }))
+
+    setSelectedTerminalId(null)
+    setSelectedWireId(wireId)
+    setSelectedBendId(null)
+
+    resetCalculation()
+  }
+
+  return { handleTerminalClick }
+}

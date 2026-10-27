@@ -1,10 +1,12 @@
 import type { Circuit } from "../../types/circuit"
 import { circuitToNetlist } from "./netlist"
-import createNgspiceModule from "./ngspice.js"
 import type { SpiceResult } from "./types"
 
+type CreateNgspiceModule =
+  typeof import("./ngspice.js").default
+
 type NgspiceModule = Awaited<
-  ReturnType<typeof createNgspiceModule>
+  ReturnType<CreateNgspiceModule>
 >
 
 let ngspiceModule: NgspiceModule | null = null
@@ -22,7 +24,9 @@ async function loadNgspice() {
     return loadingPromise
   }
 
-  loadingPromise = createNgspiceModule({
+  loadingPromise = import("./ngspice.js").then(
+  ({ default: createNgspiceModule }) =>
+    createNgspiceModule({
     noInitialRun: true,
 
     ENV: {
@@ -110,6 +114,7 @@ async function loadNgspice() {
       return `${prefix}${path}`
     },
   })
+)
 
   try {
     ngspiceModule = await loadingPromise
