@@ -56,9 +56,6 @@ import {
   useComponentActions,
 } from "./hooks/useComponentActions"
 
-const EDITOR_WIDTH = 900
-const EDITOR_HEIGHT = 650
-
 // =====================================================
 // App
 // =====================================================
@@ -75,7 +72,6 @@ function App() {
     idCounter,
     createId,
   } = useCircuit()
-
   // ---------------------------------------------------
   // 選択状態
   // ---------------------------------------------------
@@ -95,6 +91,8 @@ function App() {
 
   clearCircuitSelection, 
 } = useCircuitSelection()
+
+const [editorZoom, setEditorZoom] = useState(1)
 
   // ---------------------------------------------------
   // 部品値入力
@@ -117,6 +115,7 @@ function App() {
     setSelectedBendId,
 
     setValueInput,
+
   })
 
   // ---------------------------------------------------
@@ -228,8 +227,6 @@ function App() {
 
     setResistorResults,
 
-    editorWidth: EDITOR_WIDTH,
-    editorHeight: EDITOR_HEIGHT,
   })
 
   // ===================================================
@@ -812,17 +809,14 @@ function App() {
   return (
     <div
       style={{
-        display: "flex",
-
-        height: "100vh",
-
-        width: "100vw",
-
-        overflow: "hidden",
-
-        fontFamily:
-          "Arial, sans-serif",
-      }}
+      display: "flex",
+      flexDirection: "row",
+      height: "100vh",
+      width: "100%",
+      minWidth: 0,
+      overflow: "hidden",
+      fontFamily: "Arial, sans-serif",
+    }}
     >
 
       {/* ===========================================
@@ -868,6 +862,9 @@ function App() {
         circuit={
           circuit
         }
+
+        zoom={editorZoom}
+        onZoomChange={setEditorZoom}
 
         selectedComponentId={
           selectedComponentId

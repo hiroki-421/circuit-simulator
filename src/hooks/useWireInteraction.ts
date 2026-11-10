@@ -18,6 +18,8 @@ type BendDraggingState = {
   startY: number
   originalX: number
   originalY: number
+  scaleX: number
+  scaleY: number
 }
 
 type UseWireInteractionProps = {
@@ -69,8 +71,6 @@ type UseWireInteractionProps = {
     value: never[]
   ) => void
 
-  editorWidth: number
-  editorHeight: number
 }
 
 export function useWireInteraction({
@@ -94,8 +94,6 @@ export function useWireInteraction({
   setTotalCurrent,
   setResistorResults,
 
-  editorWidth,
-  editorHeight,
 }: UseWireInteractionProps) {
   const bendDraggingRef =
     useRef<BendDraggingState | null>(
@@ -256,28 +254,16 @@ export function useWireInteraction({
       return
     }
 
-    const rect =
-      svg.getBoundingClientRect()
+    const screenMatrix = svg.getScreenCTM()
+    if (!screenMatrix) return
 
-    const scaleX =
-      editorWidth /
-      rect.width
+    const point = svg.createSVGPoint()
+    point.x = e.clientX
+    point.y = e.clientY
+    const localPoint = point.matrixTransform(screenMatrix.inverse())
 
-    const scaleY =
-      editorHeight /
-      rect.height
-
-    const x =
-      (
-        e.clientX -
-        rect.left
-      ) * scaleX
-
-    const y =
-      (
-        e.clientY -
-        rect.top
-      ) * scaleY
+    const x = localPoint.x
+    const y = localPoint.y
 
     const bendId =
       `bend-${idCounter.current++}`
@@ -358,10 +344,17 @@ export function useWireInteraction({
       bendId
     )
 
+    const svg = e.currentTarget.ownerSVGElement
+    const matrix = svg?.getScreenCTM()
+    if (!matrix) return
+
     bendDraggingRef.current = {
       wireId,
 
       bendId,
+
+      scaleX: Math.abs(matrix.a) || 1,
+      scaleY: Math.abs(matrix.d) || 1,
 
       startX:
         e.clientX,
@@ -398,12 +391,10 @@ export function useWireInteraction({
     }
 
     const dx =
-      e.clientX -
-      drag.startX
+      (e.clientX - drag.startX) / drag.scaleX
 
     const dy =
-      e.clientY -
-      drag.startY
+      (e.clientY - drag.startY) / drag.scaleY
 
     setCircuit(
       (prev) => ({

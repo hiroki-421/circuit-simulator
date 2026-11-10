@@ -16,6 +16,8 @@ type DraggingState = {
   startY: number
   originalX: number
   originalY: number
+  scaleX: number
+  scaleY: number
 }
 
 type UseComponentDragProps = {
@@ -35,6 +37,7 @@ type UseComponentDragProps = {
   setValueInput: (
     value: string
   ) => void
+
 }
 
 export function useComponentDrag({
@@ -76,8 +79,15 @@ export function useComponentDrag({
       component.valueInput
     )
 
+    const svg = e.currentTarget.ownerSVGElement
+    const matrix = svg?.getScreenCTM()
+    if (!matrix) return
+
     draggingRef.current = {
       componentId,
+
+      scaleX: Math.abs(matrix.a) || 1,
+      scaleY: Math.abs(matrix.d) || 1,
 
       startX:
         e.clientX,
@@ -114,12 +124,10 @@ export function useComponentDrag({
     }
 
     const dx =
-      e.clientX -
-      drag.startX
+      (e.clientX - drag.startX) / drag.scaleX
 
     const dy =
-      e.clientY -
-      drag.startY
+      (e.clientY - drag.startY) / drag.scaleY
 
     const rawX =
       drag.originalX +

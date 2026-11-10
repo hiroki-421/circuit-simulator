@@ -57,6 +57,9 @@ type Props = {
   ) => void
 
   onClearSelection: () => void
+
+  zoom: number
+  onZoomChange: (zoom: number) => void
 }
 
 const WIDTH = 900
@@ -195,22 +198,84 @@ export default function CircuitEditor({
   onBendClick,
   onToggleSwitch,
   onClearSelection,
+
+  zoom,
+  onZoomChange,
 }: Props) {
   return (
     <div
       style={{
         flex: 1,
-        overflow: "auto",
+        minWidth: 0,
+        minHeight: 0,
+        height: "100%",
+        overflow: "hidden",
         background: "#eee",
+        position: "relative",
       }}
     >
+
+    <div
+  style={{
+    position: "absolute",
+    top: 10,
+    left: 10,
+    zIndex: 10,
+    display: "flex",
+    gap: 6,
+    padding: 8,
+    width: "fit-content",
+    background: "white",
+    border: "1px solid #ccc",
+    borderRadius: 8,
+  }}
+>
+  <button
+    onClick={() =>
+      onZoomChange(
+        Math.min(2, zoom + 0.1)
+      )
+    }
+  >
+    ＋
+  </button>
+
+  <span
+    style={{
+      minWidth: 55,
+      textAlign: "center",
+      alignSelf: "center",
+    }}
+  >
+    {Math.round(zoom * 100)}%
+  </span>
+
+  <button
+    onClick={() =>
+      onZoomChange(
+        Math.max(0.5, zoom - 0.1)
+      )
+    }
+  >
+    －
+  </button>
+
+  <button
+    onClick={() => onZoomChange(1)}
+  >
+    リセット
+  </button>
+</div>
+
       <svg
-        width={WIDTH}
-        height={HEIGHT}
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${WIDTH / zoom} ${HEIGHT / zoom}`}
+        preserveAspectRatio="xMidYMid meet"
         style={{
           background: "white",
           display: "block",
+          touchAction: "none",
         }}
         onClick={
           onClearSelection
